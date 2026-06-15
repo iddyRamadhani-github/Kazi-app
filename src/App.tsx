@@ -351,14 +351,22 @@ export default function App() {
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
           
           {/* Logo */}
-          <div className="flex items-center justify-between">
-            <h1 
+          <div className="flex items-center gap-2.5">
+            <div 
               onClick={() => setScreen("landing")}
-              className="text-xl font-extrabold tracking-tight cursor-pointer font-sans"
+              className="flex items-center gap-2 cursor-pointer group select-none"
             >
-              Kazi<span className="text-[#F5A623]">TZ</span>
-            </h1>
-            <span className="text-[9px] bg-emerald-950 text-gold rounded ml-2 px-1.5 py-0.5 border border-emerald-800 font-mono tracking-widest font-bold">
+              <img 
+                src="/src/assets/images/kazitz_logo_1781527950413.jpg" 
+                className="h-8 w-8 rounded-full border border-emerald-500/40 object-cover shrink-0 group-hover:scale-105 transition duration-150" 
+                alt="KaziTZ Logo" 
+                referrerPolicy="no-referrer"
+              />
+              <h1 className="text-xl font-extrabold tracking-tight font-sans">
+                Kazi<span className="text-[#F5A623]">TZ</span>
+              </h1>
+            </div>
+            <span className="text-[9px] bg-emerald-950 text-gold rounded px-1.5 py-0.5 border border-emerald-800 font-mono tracking-widest font-bold">
               AI PLATFORM
             </span>
           </div>
@@ -538,7 +546,13 @@ export default function App() {
             
             <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 text-left">
               
-              <div className="text-center font-sans border-b border-gray-100 pb-4 mb-4">
+              <div className="text-center font-sans border-b border-gray-100 pb-4 mb-4 flex flex-col items-center">
+                <img 
+                  src="/src/assets/images/kazitz_logo_1781527950413.jpg" 
+                  className="h-12 w-12 rounded-full border border-emerald-500/30 object-cover shadow-xs mb-2.5" 
+                  alt="KaziTZ Logo" 
+                  referrerPolicy="no-referrer"
+                />
                 <h3 className="font-extrabold text-xl text-[#0B4D2E]">KaziTZ Portal</h3>
                 <p className="text-xs text-gray-500 mt-1">Unda akaunti au ingia kuratibu matangazo yako ya ajira.</p>
               </div>
