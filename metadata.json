@@ -1,0 +1,6 @@
+{
+  "name": "KaziTZ",
+  "description": "Tanzania's premium AI-powered job board and recruitment platform, facilitating job placement, smart descriptions, and applicant management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
