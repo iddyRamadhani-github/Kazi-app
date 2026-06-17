@@ -62,3 +62,13 @@ export interface JobApplication {
   aiMatchingPoints?: string[];
   aiGaps?: string[];
 }
+
+export interface WebJobListing {
+  title: string;
+  company: string;
+  region: string;
+  description: string;
+  applyUrl: string;
+  source: string;
+  datePosted?: string;
+}

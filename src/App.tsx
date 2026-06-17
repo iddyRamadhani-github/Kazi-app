@@ -357,7 +357,7 @@ export default function App() {
               className="flex items-center gap-2 cursor-pointer group select-none"
             >
               <img 
-                src="/src/assets/images/kazitz_logo_1781527950413.jpg" 
+                src="/kazitz_logo.jpg" 
                 className="h-8 w-8 rounded-full border border-emerald-500/40 object-cover shrink-0 group-hover:scale-105 transition duration-150" 
                 alt="KaziTZ Logo" 
                 referrerPolicy="no-referrer"
@@ -548,7 +548,7 @@ export default function App() {
               
               <div className="text-center font-sans border-b border-gray-100 pb-4 mb-4 flex flex-col items-center">
                 <img 
-                  src="/src/assets/images/kazitz_logo_1781527950413.jpg" 
+                  src="/kazitz_logo.jpg" 
                   className="h-12 w-12 rounded-full border border-emerald-500/30 object-cover shadow-xs mb-2.5" 
                   alt="KaziTZ Logo" 
                   referrerPolicy="no-referrer"

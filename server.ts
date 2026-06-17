@@ -602,6 +602,136 @@ Keep the review extremely realistic and constructive.`;
   }
 });
 
+// API: AI-Powered Real-time Web & LinkedIn Job Search (Google Search Grounding)
+app.post("/api/jobs/web-search", async (req, res) => {
+  try {
+    const { keyword, category, region } = req.body;
+    
+    // Construct search term for Tanzania vacancies
+    let searchQuery = "latest active job openings vacancies Tanzania";
+    if (keyword && keyword.trim().length > 0) searchQuery += ` "${keyword}"`;
+    if (category && category !== "all") searchQuery += ` "${category}"`;
+    if (region && region !== "all") searchQuery += ` "${region}"`;
+
+    let realJobs: any[] = [];
+    let isGroundingUsed = false;
+
+    // Check if Gemini API Key is available
+    if (process.env.GEMINI_API_KEY) {
+      const ai = getGeminiClient();
+      
+      const prompt = `Search the web for the absolute latest, active real-world job vacancies and postings in Tanzania matching: ${searchQuery}.
+Focus on actual job posts published on LinkedIn, BrighterMonday, ZoomTanzania, company websites, or public boards in Tanzania.
+Ensure these jobs are actually active and open for applications.
+Return a list of exactly 5 to 7 live openings.
+For each job, extract the actual apply/reference URL (such as a link to view or apply on LinkedIn, BrighterMonday, company career page). This URL MUST be stored inside the "applyUrl" field.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              jobs: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    title: { type: Type.STRING },
+                    company: { type: Type.STRING },
+                    region: { type: Type.STRING },
+                    description: { type: Type.STRING, description: "A detailed summary of responsibilities, requirements, and information from the job posting in elegant Swahili or English." },
+                    applyUrl: { type: Type.STRING, description: "Direct valid link to apply, e.g. a LinkedIn / BrighterMonday job post or company portal link" },
+                    source: { type: Type.STRING, description: "The name of the website this was found on (e.g. LinkedIn, BrighterMonday, ZoomTanzania, UN Careers)" },
+                    datePosted: { type: Type.STRING, description: "e.g., 2 days ago, June 14 2026, etc." }
+                  },
+                  required: ["title", "company", "region", "description", "applyUrl", "source"],
+                }
+              }
+            },
+            required: ["jobs"]
+          }
+        }
+      });
+
+      const textResult = response.text || "{}";
+      const parsed = JSON.parse(textResult);
+      if (parsed && Array.isArray(parsed.jobs)) {
+        realJobs = parsed.jobs;
+        isGroundingUsed = true;
+      }
+    }
+
+    // Fallback/Mock listings if no API key or no results found
+    if (realJobs.length === 0) {
+      realJobs = [
+        {
+          title: "Senior Software Engineer (FinTech & Mobile Money)",
+          company: "Vodacom Tanzania Plc",
+          region: "Dar es Salaam",
+          description: "Nafasi ya uandishi wa mifumo ya miamala ya M-Pesa. Inahitaji uzoefu wa miaka 5, maarifa ya Node.js, Spring Boot na Cloud Infrastructure. Hii ni nafasi ya kudumu katika makao makuu Dar es Salaam.",
+          applyUrl: "https://www.linkedin.com/company/vodacom-tanzania/jobs/",
+          source: "LinkedIn",
+          datePosted: "Leo (Simulated)"
+        },
+        {
+          title: "Agricultural Extension Officer & Agronomist",
+          company: "One Acre Fund Tanzania",
+          region: "Iringa",
+          description: "Kusaidia wakulima wadogo wadogo kuongeza tija kwenye kilimo cha mahindi na alizeti. Inahitaji stashahada/shahada ya kilimo kutoka SUA au chuo chochote kinachotambulika na Serikali.",
+          applyUrl: "https://oneacrefund.org/work-with-us/job-openings/",
+          source: "Company Website",
+          datePosted: "Masaa 12 yaliyopita (Simulated)"
+        },
+        {
+          title: "Graduate Management Trainee (Finance & Retail)",
+          company: "NMB Bank Plc",
+          region: "Dodoma",
+          description: "Mpango maalum kwa wahitimu wapya wa vyuo vikuu wenye ufaulu wa juu katika fani za Uhasibu, Uchumi na Usimamizi wa Biashara. Mafunzo yatatolewa Dodoma na mikoa mingine kote nchini.",
+          applyUrl: "https://www.nmbbank.co.tz/careers",
+          source: "NMB Portal",
+          datePosted: "Siku 2 zilizopita (Simulated)"
+        },
+        {
+          title: "Senior NGO Program Coordinator",
+          company: "Pathfinder International",
+          region: "Tabora",
+          description: "Kusimamia miradi ya afya ya jamii na usafi wa mazingira vijijini. Uzoefu wa miaka 3 kwenye usimamizi wa miradi ya wafadhili (USAID/Global Fund) unahitajika sana.",
+          applyUrl: "https://www.brightermonday.co.tz/jobs",
+          source: "BrighterMonday",
+          datePosted: "Siku 3 zilizopita (Simulated)"
+        },
+        {
+          title: "Node.js Backend Developer",
+          company: "Halotel Tanzania",
+          region: "Dar es Salaam",
+          description: "Kusimamai na kuboresha mifumo ya mawasiliano na API za Halopesa. Maarifa makubwa ya Javascript/Typescript, MySQL, Redis, na Linux server management ni lazima.",
+          applyUrl: "https://halotel.co.tz/",
+          source: "Company Portal",
+          datePosted: "Siku 4 zilizopita (Simulated)"
+        }
+      ];
+    }
+
+    res.json({
+      success: true,
+      query: searchQuery,
+      groundingUsed: isGroundingUsed,
+      jobs: realJobs
+    });
+
+  } catch (error: any) {
+    console.error("Web Search Grounding job search error:", error);
+    res.status(500).json({
+      error: error.message || "Failed to search jobs using Gemini Search Grounding",
+      jobs: []
+    });
+  }
+});
+
 // Vite Middleware integration
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {
