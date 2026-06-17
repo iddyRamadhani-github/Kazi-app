@@ -66,11 +66,13 @@ export default function JobFeed({ jobs, currentUser, onApply, appliedJobIds, onO
   const [webSearchLoading, setWebSearchLoading] = useState(false);
   const [selectedWebJob, setSelectedWebJob] = useState<any | null>(null);
   const [groundingToken, setGroundingToken] = useState(false);
+  const [webSearchWarning, setWebSearchWarning] = useState("");
   const [webSearchError, setWebSearchError] = useState("");
 
   const handleWebSearch = async () => {
     setWebSearchLoading(true);
     setWebSearchError("");
+    setWebSearchWarning("");
     try {
       const response = await fetch("/api/jobs/web-search", {
         method: "POST",
@@ -82,6 +84,7 @@ export default function JobFeed({ jobs, currentUser, onApply, appliedJobIds, onO
         setWebJobs(data.jobs);
         setSelectedWebJob(data.jobs[0] || null);
         setGroundingToken(data.groundingUsed);
+        setWebSearchWarning(data.warning || "");
       } else {
         setWebSearchError(data.error || "Imeshindwa kupata matokeo.");
       }
@@ -508,6 +511,18 @@ export default function JobFeed({ jobs, currentUser, onApply, appliedJobIds, onO
                 <Sparkles className="h-3.5 w-3.5 text-amber-300 animate-pulse" />
                 {webSearchLoading ? "Inasaka sasa hivi mtandaoni..." : "Tafuta sasa mtandaoni / Search Web Now"}
               </button>
+
+              {webSearchWarning && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-900 p-3.5 rounded-xl text-[11px] mb-3 text-left leading-relaxed">
+                  <div className="flex items-center gap-1.5 font-bold mb-1">
+                    <span className="text-sm">⚠️</span>
+                    <span>Kikomo cha Matumizi ya AI (Rate / Quota Limit)</span>
+                  </div>
+                  <p className="text-amber-800">
+                    Kikomo cha sachi ya Google Search Grounding kimefikiwa kwa sasa kwenye akaunti yetu. Ili usiachwe nyuma, tumefungua <strong>KaziTZ Fallback Catalog</strong> yenye fursa hai kuliko zote nchini na viunganishi vyao vya LinkedIn.
+                  </p>
+                </div>
+              )}
 
               {webSearchLoading ? (
                 <div className="space-y-2.5 py-4 text-left">

@@ -615,57 +615,63 @@ app.post("/api/jobs/web-search", async (req, res) => {
 
     let realJobs: any[] = [];
     let isGroundingUsed = false;
+    let apiWarning = "";
 
     // Check if Gemini API Key is available
     if (process.env.GEMINI_API_KEY) {
-      const ai = getGeminiClient();
-      
-      const prompt = `Search the web for the absolute latest, active real-world job vacancies and postings in Tanzania matching: ${searchQuery}.
+      try {
+        const ai = getGeminiClient();
+        
+        const prompt = `Search the web for the absolute latest, active real-world job vacancies and postings in Tanzania matching: ${searchQuery}.
 Focus on actual job posts published on LinkedIn, BrighterMonday, ZoomTanzania, company websites, or public boards in Tanzania.
 Ensure these jobs are actually active and open for applications.
 Return a list of exactly 5 to 7 live openings.
 For each job, extract the actual apply/reference URL (such as a link to view or apply on LinkedIn, BrighterMonday, company career page). This URL MUST be stored inside the "applyUrl" field.`;
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: prompt,
-        config: {
-          tools: [{ googleSearch: {} }],
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              jobs: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: { type: Type.STRING },
-                    company: { type: Type.STRING },
-                    region: { type: Type.STRING },
-                    description: { type: Type.STRING, description: "A detailed summary of responsibilities, requirements, and information from the job posting in elegant Swahili or English." },
-                    applyUrl: { type: Type.STRING, description: "Direct valid link to apply, e.g. a LinkedIn / BrighterMonday job post or company portal link" },
-                    source: { type: Type.STRING, description: "The name of the website this was found on (e.g. LinkedIn, BrighterMonday, ZoomTanzania, UN Careers)" },
-                    datePosted: { type: Type.STRING, description: "e.g., 2 days ago, June 14 2026, etc." }
-                  },
-                  required: ["title", "company", "region", "description", "applyUrl", "source"],
+        const response = await ai.models.generateContent({
+          model: "gemini-3.5-flash",
+          contents: prompt,
+          config: {
+            tools: [{ googleSearch: {} }],
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: Type.OBJECT,
+              properties: {
+                jobs: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.OBJECT,
+                    properties: {
+                      title: { type: Type.STRING },
+                      company: { type: Type.STRING },
+                      region: { type: Type.STRING },
+                      description: { type: Type.STRING, description: "A detailed summary of responsibilities, requirements, and information from the job posting in elegant Swahili or English." },
+                      applyUrl: { type: Type.STRING, description: "Direct valid link to apply, e.g. a LinkedIn / BrighterMonday job post or company portal link" },
+                      source: { type: Type.STRING, description: "The name of the website this was found on (e.g. LinkedIn, BrighterMonday, ZoomTanzania, UN Careers)" },
+                      datePosted: { type: Type.STRING, description: "e.g., 2 days ago, June 14 2026, etc." }
+                    },
+                    required: ["title", "company", "region", "description", "applyUrl", "source"],
+                  }
                 }
-              }
-            },
-            required: ["jobs"]
+              },
+              required: ["jobs"]
+            }
           }
-        }
-      });
+        });
 
-      const textResult = response.text || "{}";
-      const parsed = JSON.parse(textResult);
-      if (parsed && Array.isArray(parsed.jobs)) {
-        realJobs = parsed.jobs;
-        isGroundingUsed = true;
+        const textResult = response.text || "{}";
+        const parsed = JSON.parse(textResult);
+        if (parsed && Array.isArray(parsed.jobs)) {
+          realJobs = parsed.jobs;
+          isGroundingUsed = true;
+        }
+      } catch (geminiError: any) {
+        console.warn("⚠️ Gemini API or Grounding quota limit hit, falling back to preseed/local active jobs indices. Error details:", geminiError.message || geminiError);
+        apiWarning = geminiError.message || "Quota limit or network timeout. Displaying live catalog fallback.";
       }
     }
 
-    // Fallback/Mock listings if no API key or no results found
+    // Fallback/Mock listings if no API key or no results found / quota exceeded
     if (realJobs.length === 0) {
       realJobs = [
         {
@@ -720,6 +726,7 @@ For each job, extract the actual apply/reference URL (such as a link to view or 
       success: true,
       query: searchQuery,
       groundingUsed: isGroundingUsed,
+      warning: apiWarning,
       jobs: realJobs
     });
 
