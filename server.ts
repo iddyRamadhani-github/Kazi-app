@@ -607,11 +607,22 @@ app.post("/api/jobs/web-search", async (req, res) => {
   try {
     const { keyword, category, region } = req.body;
     
-    // Construct search term for Tanzania vacancies
-    let searchQuery = "latest active job openings vacancies Tanzania";
-    if (keyword && keyword.trim().length > 0) searchQuery += ` "${keyword}"`;
-    if (category && category !== "all") searchQuery += ` "${category}"`;
-    if (region && region !== "all") searchQuery += ` "${region}"`;
+    // Construct active search queries with strict recency parameters (sandbox current date is June 18, 2026)
+    const activeDateFilter = "June 2026";
+    let searchQuery = `active vacant jobs openings Tanzania "${activeDateFilter}"`;
+    
+    // Explicitly target high-volume Tanzanian jobs boards and platforms to broaden index coverage
+    searchQuery += " (site:linkedin.com/jobs OR site:brightermonday.co.tz OR site:zoomtanzania.com OR site:mabumbe.com OR site:ajirayako.co.tz OR site:portal.ajira.go.tz OR site:kazi.go.tz OR site:unjobs.org/resolutions/dar-es-salaam)";
+
+    if (keyword && keyword.trim().length > 0) {
+      searchQuery += ` "${keyword.trim()}"`;
+    }
+    if (category && category !== "all") {
+      searchQuery += ` "${category}"`;
+    }
+    if (region && region !== "all" && region !== "Tanzania nzima") {
+      searchQuery += ` "${region}"`;
+    }
 
     let realJobs: any[] = [];
     let isGroundingUsed = false;
@@ -622,11 +633,17 @@ app.post("/api/jobs/web-search", async (req, res) => {
       try {
         const ai = getGeminiClient();
         
-        const prompt = `Search the web for the absolute latest, active real-world job vacancies and postings in Tanzania matching: ${searchQuery}.
-Focus on actual job posts published on LinkedIn, BrighterMonday, ZoomTanzania, company websites, or public boards in Tanzania.
-Ensure these jobs are actually active and open for applications.
-Return a list of exactly 5 to 7 live openings.
-For each job, extract the actual apply/reference URL (such as a link to view or apply on LinkedIn, BrighterMonday, company career page). This URL MUST be stored inside the "applyUrl" field.`;
+        const prompt = `You are a professional Tanzanian recruitment search assistant.
+Current Date Context: June 18, 2026.
+Use your Google Search grounding tool with the query: "${searchQuery}" to harvest the newest active job postings.
+
+CRITICAL CURRENTNESS & VALIDATION CHECKS:
+1. EXCLUDE all expired vacancies. Look closely at search snippet dates or metadata. If the post has an expired deadline (date before June 18, 2026) or states "Maombi yamefungwa / CLOSED", do not include it.
+2. Prioritize postings from the last 7 to 14 days (June 2026).
+3. Broaden your search to cover LinkedIn, BrighterMonday, ZoomTanzania, Mabumbe, Ajira Portal (PSR / portal.ajira.go.tz), UN Careers, and major Tanzanian bank or corporate sites.
+4. Ensure the extracted links (applyUrl) are valid and direct to the specific posting page rather than general home pages.
+
+Return a JSON array of exactly 5 to 7 high-quality, currently open, real vacancies.`;
 
         const response = await ai.models.generateContent({
           model: "gemini-3.5-flash",
